@@ -101,22 +101,19 @@ class SmsAutofillService : AutofillService() {
 
         if (semanticHit) return true
 
-        // 数字密码输入框（常见于 6 位验证码框），且长度限制较短
+        // 数字密码输入框（常见于 6 位验证码框）
         val inputType = node.inputType
         val inputClass = inputType and InputType.TYPE_MASK_CLASS
         val isNumeric = inputClass == InputType.TYPE_CLASS_NUMBER ||
             inputClass == InputType.TYPE_CLASS_PHONE
-        val maxLen = node.maxLengths?.firstOrNull() ?: -1
-        if (isNumeric && maxLen in 4..10) return true
-
-        return false
+        return isNumeric
     }
 
     private fun findOtpField(
         node: android.app.assist.AssistStructure.ViewNode,
         signal: CancellationSignal
     ): android.app.assist.AssistStructure.ViewNode? {
-        if (signal.isCancelled) return null
+        if (signal.isCanceled) return null
         if (isOtpField(node) && node.autofillId != null) return node
         for (i in 0 until node.childCount) {
             val child = node.getChildAt(i) ?: continue
