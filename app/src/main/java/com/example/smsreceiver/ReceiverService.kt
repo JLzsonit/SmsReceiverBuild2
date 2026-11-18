@@ -21,6 +21,7 @@ class ReceiverService : Service() {
 
     companion object {
         const val EXTRA_TOPIC = "topic"
+        const val EXTRA_SERVER = "server"
         private const val CHANNEL_SERVICE = "service_channel"   // 常驻通知（低优先级）
         private const val CHANNEL_MESSAGE = "sms_channel"      // 短信通知（高优先级）
         private const val NOTIF_SERVICE_ID = 1
@@ -31,24 +32,26 @@ class ReceiverService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val topic = intent?.getStringExtra(EXTRA_TOPIC)
-            ?: getSharedPreferences("config", Context.MODE_PRIVATE)
-                .getString("topic", "") ?: ""
+        val cfg = ConfigStore.get(this)
+        val topic = intent?.getStringExtra(EXTRA_TOPIC)?.takeIf { it.isNotBlank() } ?: cfg.topic
+        val server = ConfigStore.normalize(
+            intent?.getStringExtra(EXTRA_SERVER)?.takeIf { it.isNotBlank() } ?: cfg.server
+        )
 
         if (topic.isBlank()) {
             stopSelf()
             return START_NOT_STICKY
         }
 
-        createChannels()
-        startForeground(NOTIF_SERVICE_ID, serviceNotification(topic))
+        // 保存配置，开机自启和下次启动都能恢复
+        ConfigStore.save(this, server, topic)
 
-        // 保存主题，开机自启和下次启动都能恢复
-        getSharedPreferences("config", Context.MODE_PRIVATE)
-            .edit().putString("topic", topic).apply()
+        createChannels()
+        startForeground(NOTIF_SERVICE_ID, serviceNotification(server, topic))
 
         subscriber?.stop()
         subscriber = NtfySubscriber(
+            server = server,
             topic = topic,
             onMessage = { sms -> onSms(sms) },
             onStatus = { text, connected ->
@@ -83,14 +86,14 @@ class ReceiverService : Service() {
         )
     }
 
-    private fun serviceNotification(topic: String): Notification {
+    private fun serviceNotification(server: String, topic: String): Notification {
         val tapIntent = PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE
         )
         return NotificationCompat.Builder(this, CHANNEL_SERVICE)
             .setSmallIcon(android.R.drawable.ic_dialog_email)
             .setContentTitle("短信接收服务运行中")
-            .setContentText("正在订阅 ntfy.sh/$topic")
+            .setContentText("正在订阅 $server/$topic")
             .setContentIntent(tapIntent)
             .setOngoing(true)
             .build()
