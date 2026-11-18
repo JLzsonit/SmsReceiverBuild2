@@ -1,5 +1,6 @@
 package com.example.smsreceiver
 
+import android.app.assist.AssistStructure
 import android.os.CancellationSignal
 import android.service.autofill.AutofillService
 import android.service.autofill.Dataset
@@ -82,7 +83,7 @@ class SmsAutofillService : AutofillService() {
      * 判断一个输入框是否是验证码输入框。
      * 综合 autofillHints、inputType、hint、id 等特征，避免误填金额、手机号等其他数字框。
      */
-    private fun isOtpField(node: android.view.autofill.AssistStructure.ViewNode): Boolean {
+    private fun isOtpField(node: android.app.assist.AssistStructure.ViewNode): Boolean {
         val hints = node.autofillHints?.joinToString(",") ?: ""
         val idEntry = node.idEntry ?: ""
         val hintText = node.hint?.toString() ?: ""
@@ -112,9 +113,9 @@ class SmsAutofillService : AutofillService() {
     }
 
     private fun findOtpField(
-        node: android.view.autofill.AssistStructure.ViewNode,
+        node: android.app.assist.AssistStructure.ViewNode,
         signal: CancellationSignal
-    ): android.view.autofill.AssistStructure.ViewNode? {
+    ): android.app.assist.AssistStructure.ViewNode? {
         if (signal.isCancelled) return null
         if (isOtpField(node) && node.autofillId != null) return node
         for (i in 0 until node.childCount) {
