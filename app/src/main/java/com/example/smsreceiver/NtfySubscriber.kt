@@ -19,7 +19,8 @@ import java.util.concurrent.TimeUnit
 class NtfySubscriber(
     private val topic: String,
     private val onMessage: (SmsMessage) -> Unit,
-    private val onStatus: (text: String, connected: Boolean) -> Unit
+    private val onStatus: (text: String, connected: Boolean) -> Unit,
+    private val server: String = ConfigStore.DEFAULT_SERVER
 ) {
     private val client = OkHttpClient.Builder()
         .readTimeout(0, TimeUnit.MILLISECONDS) // 长连接：读超时设为无限
@@ -44,12 +45,12 @@ class NtfySubscriber(
     }
 
     private fun loop() {
-        onStatus("正在连接 ntfy.sh …", false)
+        onStatus("正在连接 $server …", false)
         while (running) {
             try {
                 // since=all：首次连接补拉缓存中的历史消息；后续重连也由此补齐断线期间的消息
                 val request = Request.Builder()
-                    .url("https://ntfy.sh/$topic/json?since=all")
+                    .url("$server/$topic/json?since=all")
                     .build()
 
                 client.newCall(request).execute().use { response ->
