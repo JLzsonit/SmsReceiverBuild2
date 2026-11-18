@@ -49,6 +49,8 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.8.2")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
+    // 底部导航图标 + 界面图标
+    implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
 
     // ntfy 订阅长连接（HTTP 流式读取）
