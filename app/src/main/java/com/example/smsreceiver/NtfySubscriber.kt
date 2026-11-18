@@ -90,8 +90,8 @@ class NtfySubscriber(
         synchronized(seenIds) {
             if (!seenIds.add(id)) return
             if (seenIds.size > 1000) {
-                val it = seenIds.iterator()
-                repeat(200) { it.next(); it.remove() }
+                val iter = seenIds.iterator()
+                repeat(200) { if (iter.hasNext()) { iter.next(); iter.remove() } }
             }
         }
 
@@ -104,7 +104,7 @@ class NtfySubscriber(
     /** 尝试按 SmsForwarder 模板 JSON 解析，失败返回 null */
     private fun parseSms(text: String, ntfyTime: Long): SmsMessage? = try {
         val obj = JsonParser.parseString(text).asJsonObject
-        if (!obj.has("msg")) return null
+        if (!obj.has("msg")) null else {
 
         fun str(name: String): String =
             obj.get(name)?.takeIf { !it.isJsonNull }?.asString ?: ""
@@ -122,6 +122,7 @@ class NtfySubscriber(
             device = str("device"),
             timestamp = num("time").takeIf { it > 0 } ?: ntfyTime * 1000
         )
+        } // end else
     } catch (e: Exception) {
         null
     }

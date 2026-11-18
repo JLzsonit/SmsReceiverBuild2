@@ -2,12 +2,12 @@ package com.example.smsreceiver
 
 import android.os.CancellationSignal
 import android.service.autofill.AutofillService
-import android.service.autofill.AutofillValue
 import android.service.autofill.Dataset
 import android.service.autofill.FillCallback
 import android.service.autofill.FillRequest
 import android.service.autofill.FillResponse
-import android.view.InputType
+import android.text.InputType
+import android.view.autofill.AutofillValue
 import android.widget.RemoteViews
 import java.util.Locale
 

@@ -28,6 +28,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -91,7 +92,7 @@ class MainActivity : ComponentActivity() {
     /** 跳转到系统自动填充服务设置页，让用户选择本 App */
     private fun openAutofillSettings() {
         try {
-            val intent = Intent(Settings.ACTION_AUTOFILL_SETTINGS)
+            val intent = Intent("android.settings.AUTOFILL_SETTINGS")
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
         } catch (e: Exception) {
