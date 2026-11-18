@@ -1,0 +1,135 @@
+package com.example.smsreceiver
+
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.IBinder
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
+
+/**
+ * 前台服务：承载 ntfy 订阅长连接。
+ * 前台服务 + 常驻通知可以大幅降低被系统杀掉的概率，保证低延迟实时接收。
+ */
+class ReceiverService : Service() {
+
+    companion object {
+        const val EXTRA_TOPIC = "topic"
+        private const val CHANNEL_SERVICE = "service_channel"   // 常驻通知（低优先级）
+        private const val CHANNEL_MESSAGE = "sms_channel"      // 短信通知（高优先级）
+        private const val NOTIF_SERVICE_ID = 1
+    }
+
+    private var subscriber: NtfySubscriber? = null
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val topic = intent?.getStringExtra(EXTRA_TOPIC)
+            ?: getSharedPreferences("config", Context.MODE_PRIVATE)
+                .getString("topic", "") ?: ""
+
+        if (topic.isBlank()) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
+        createChannels()
+        startForeground(NOTIF_SERVICE_ID, serviceNotification(topic))
+
+        // 保存主题，开机自启和下次启动都能恢复
+        getSharedPreferences("config", Context.MODE_PRIVATE)
+            .edit().putString("topic", topic).apply()
+
+        subscriber?.stop()
+        subscriber = NtfySubscriber(
+            topic = topic,
+            onMessage = { sms -> onSms(sms) },
+            onStatus = { text, connected ->
+                AppBus.status.value = text
+                AppBus.connected.value = connected
+            }
+        ).also { it.start() }
+
+        return START_STICKY // 被系统杀掉后自动重启
+    }
+
+    override fun onDestroy() {
+        subscriber?.stop()
+        subscriber = null
+        super.onDestroy()
+    }
+
+    private fun onSms(sms: SmsMessage) {
+        AppBus.addMessage(applicationContext, sms)
+        showNotification(sms)
+    }
+
+    // ---------------- 通知 ----------------
+
+    private fun createChannels() {
+        val nm = getSystemService(NotificationManager::class.java)
+        nm.createNotificationChannel(
+            NotificationChannel(CHANNEL_SERVICE, "接收服务", NotificationManager.IMPORTANCE_MIN)
+        )
+        nm.createNotificationChannel(
+            NotificationChannel(CHANNEL_MESSAGE, "转发短信", NotificationManager.IMPORTANCE_HIGH)
+        )
+    }
+
+    private fun serviceNotification(topic: String): Notification {
+        val tapIntent = PendingIntent.getActivity(
+            this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE
+        )
+        return NotificationCompat.Builder(this, CHANNEL_SERVICE)
+            .setSmallIcon(android.R.drawable.ic_dialog_email)
+            .setContentTitle("短信接收服务运行中")
+            .setContentText("正在订阅 ntfy.sh/$topic")
+            .setContentIntent(tapIntent)
+            .setOngoing(true)
+            .build()
+    }
+
+    private fun showNotification(sms: SmsMessage) {
+        if (Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) return
+
+        // 自动识别验证码：通知标题直接亮出验证码 + 一键复制按钮
+        val code = CodeExtractor.extract(sms.msg)
+
+        val tapIntent = PendingIntent.getActivity(
+            this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE
+        )
+        val builder = NotificationCompat.Builder(this, CHANNEL_MESSAGE)
+            .setSmallIcon(android.R.drawable.ic_dialog_email)
+            .setContentTitle(
+                if (code != null) "验证码 $code · 来自 ${sms.from}"
+                else sms.from.ifBlank { "收到转发短信" }
+            )
+            .setContentText(sms.msg)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(sms.msg))
+            .setContentIntent(tapIntent)
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+
+        if (code != null) {
+            val copyIntent = Intent(this, CopyCodeReceiver::class.java)
+                .putExtra(CopyCodeReceiver.EXTRA_CODE, code)
+            val copyPending = PendingIntent.getBroadcast(
+                this, code.hashCode(), copyIntent, PendingIntent.FLAG_IMMUTABLE
+            )
+            builder.addAction(0, "复制验证码", copyPending)
+        }
+
+        getSystemService(NotificationManager::class.java)
+            .notify(sms.receivedAt.hashCode(), builder.build())
+    }
+}

@@ -1,6 +1,25 @@
+# Gradle
 .gradle/
 build/
-artifacts/
+*/build/
 local.properties
-*.iml
+
+# Android Studio / IntelliJ
 .idea/
+*.iml
+*.ipr
+*.iws
+.DS_Store
+
+# Keystore & secrets
+*.jks
+*.keystore
+keystore.properties
+
+# Kotlin
+.kotlin/
+
+# Captures
+captures/
+.externalNativeBuild/
+.cxx/

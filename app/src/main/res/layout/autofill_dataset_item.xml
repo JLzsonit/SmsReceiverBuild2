@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 自动填充候选气泡的布局：RemoteViews 必须使用独立布局文件 -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/autofill_code_text"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="12dp"
+    android:textSize="16sp"
+    android:textColor="#222222"
+    android:background="#FFFFFF" />
