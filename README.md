@@ -1,6 +1,6 @@
 # 短信接收端 App（SmsReceiver · ntfy 版）
 
-> 📥 **下载安装（v1.6 内置 10 种铃声版）**：[点此下载 APK](https://github.com/JLzsonit/SmsReceiver/releases/download/v1.6/SmsReceiver-v1.6-debug.apk) · [查看全部版本](https://github.com/JLzsonit/SmsReceiver/releases)
+> 📥 **下载安装（v1.7 消息详情版）**：[点此下载 APK](https://github.com/JLzsonit/SmsReceiver/releases/download/v1.7/SmsReceiver-v1.7-debug.apk) · [查看全部版本](https://github.com/JLzsonit/SmsReceiver/releases)
 
 配合备用机上的 [SmsForwarder](https://github.com/pppscn/SmsForwarder) 使用，
 **两台手机无论相隔多远、是否同一网络，只要有网就能实时收到短信**。
@@ -18,6 +18,7 @@
 - 断网自动重连 + 按消息 id 去重，断线期间的消息重连后自动补收
 - 前台服务 + 开机自启 + 忽略电池优化，保证息屏也能实时收
 - **内置 10 种提示音**：设置 →「新短信提示音」可试听、更换，选择自动保存；收到短信即响（手机完全静音时不响）
+- **消息可点进详情**：长短信在列表里看不全，点一下消息卡片进入详情页看完整内容，并可单独复制验证码或复制全文（列表页的复制按钮保留）
 
 ## 项目结构
 
