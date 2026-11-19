@@ -8,20 +8,35 @@ import android.content.Context
  */
 data class AppConfig(
     val server: String = ConfigStore.DEFAULT_SERVER,
-    val topic: String = ""
+    val topic: String = "",
+    val template: String = ConfigStore.DEFAULT_TEMPLATE
 )
 
 object ConfigStore {
     const val DEFAULT_SERVER = "https://ntfy.sh"
+
+    /** 默认消息模板，SmsForwarder 占位符见其文档 */
+    const val DEFAULT_TEMPLATE = """
+{
+  "type": "sms",
+  "from": "[[from]]",
+  "msg": "[[msg]]",
+  "device": "[[device_name]]",
+  "time": [[timestamp]]
+}
+"""
+
     private const val PREF = "config"
     private const val KEY_SERVER = "server"
     private const val KEY_TOPIC = "topic"
+    private const val KEY_TEMPLATE = "template"
 
     fun get(context: Context): AppConfig {
         val p = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
         return AppConfig(
             server = Endpoint.normalizeServer(p.getString(KEY_SERVER, DEFAULT_SERVER) ?: DEFAULT_SERVER),
-            topic = p.getString(KEY_TOPIC, "") ?: ""
+            topic = p.getString(KEY_TOPIC, "") ?: "",
+            template = p.getString(KEY_TEMPLATE, null) ?: DEFAULT_TEMPLATE
         )
     }
 
@@ -29,6 +44,13 @@ object ConfigStore {
         context.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit()
             .putString(KEY_SERVER, Endpoint.normalizeServer(server))
             .putString(KEY_TOPIC, Endpoint.normalizeTopic(topic))
+            .apply()
+    }
+
+    /** 单独保存用户可编辑的消息模板，不影响服务器/主题配置 */
+    fun saveTemplate(context: Context, template: String) {
+        context.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit()
+            .putString(KEY_TEMPLATE, template)
             .apply()
     }
 
