@@ -5,7 +5,7 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Material 3 Expressive：大胆的三段渐变，从左下紫到右上蓝 -->
+    <!-- 深靛 → 亮紫对角渐变 -->
     <path android:pathData="M0,0 h108 v108 h-108 Z">
         <aapt:attr name="android:fillColor">
             <gradient
@@ -14,16 +14,15 @@
                 android:startY="108"
                 android:endX="108"
                 android:endY="0"
-                android:startColor="#6D28D9"
-                android:centerColor="#4F46E5"
-                android:endColor="#0EA5E9" />
+                android:startColor="#312E81"
+                android:endColor="#8B5CF6" />
         </aapt:attr>
     </path>
-    <!-- 表现层装饰光斑 -->
+    <!-- 低透明度光斑装饰 -->
     <path
-        android:fillColor="#12FFFFFF"
-        android:pathData="M14,96 m-42,0 a42,42 0 1 1 84,0 a42,42 0 1 1 -84,0 Z" />
+        android:fillColor="#0FFFFFFF"
+        android:pathData="M16,94 m-40,0 a40,40 0 1 1 80,0 a40,40 0 1 1 -80,0 Z" />
     <path
-        android:fillColor="#1FFFFFFF"
-        android:pathData="M96,20 m-34,0 a34,34 0 1 1 68,0 a34,34 0 1 1 -68,0 Z" />
+        android:fillColor="#14FFFFFF"
+        android:pathData="M94,18 m-32,0 a32,32 0 1 1 64,0 a32,32 0 1 1 -64,0 Z" />
 </vector>
