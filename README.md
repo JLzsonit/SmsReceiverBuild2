@@ -4,7 +4,7 @@
 把一台安卓手机收到的短信，实时转发到另一台安卓手机上接收。
 发送端和接收端**都是安卓手机**，不涉及 iPhone、电脑，也不需要自己搭服务器。
 
-> 📥 **下载安装（v1.9 全新图标版）**：[点此下载 APK](https://github.com/JLzsonit/SmsReceiver/releases/download/v1.9/SmsReceiver-v1.9-debug.apk) · [查看全部版本](https://github.com/JLzsonit/SmsReceiver/releases)
+> 📥 **下载安装（v2.0 全新图标版）**：[点此下载 APK](https://github.com/JLzsonit/SmsReceiver/releases/download/v2.0/SmsReceiver-v2.0-debug.apk) · [查看全部版本](https://github.com/JLzsonit/SmsReceiver/releases)
 > 注：v1.8 起 App 名称由「短信接收端」改为「安卓短信接收」，覆盖安装后桌面图标名称会自动更新。
 
 ## 这个项目解决什么问题
