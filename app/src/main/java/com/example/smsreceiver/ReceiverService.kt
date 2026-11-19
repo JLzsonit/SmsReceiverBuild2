@@ -8,8 +8,10 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 
@@ -28,6 +30,10 @@ class ReceiverService : Service() {
     }
 
     private var subscriber: NtfySubscriber? = null
+
+    // 保活：锁屏后阻止 CPU 休眠和 WiFi 休眠，长连接才不会 2-3 分钟后被掐断
+    private var wakeLock: PowerManager.WakeLock? = null
+    private var wifiLock: WifiManager.WifiLock? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -48,6 +54,7 @@ class ReceiverService : Service() {
 
         createChannels()
         startForeground(NOTIF_SERVICE_ID, serviceNotification(server, topic))
+        acquireLocks()
 
         subscriber?.stop()
         subscriber = NtfySubscriber(
@@ -66,7 +73,42 @@ class ReceiverService : Service() {
     override fun onDestroy() {
         subscriber?.stop()
         subscriber = null
+        releaseLocks()
         super.onDestroy()
+    }
+
+    /** 锁屏/退到后台时持有唤醒锁，保证 CPU 与 WiFi 不休眠，长连接持续在线 */
+    @Suppress("WakelockTimeout")
+    private fun acquireLocks() {
+        try {
+            val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+            wakeLock?.let { if (it.isHeld) it.release() }
+            wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SmsReceiver:keepalive").apply {
+                setReferenceCounted(false)
+                acquire() // 常驻持有，服务销毁时释放
+            }
+        } catch (e: Exception) { /* 部分机型不支持，忽略 */ }
+
+        try {
+            val wm = applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+            wifiLock?.let { if (it.isHeld) it.release() }
+            @Suppress("DEPRECATION")
+            wifiLock = wm?.createWifiLock(
+                if (Build.VERSION.SDK_INT >= 29) WifiManager.WIFI_MODE_FULL_LOW_LATENCY
+                else WifiManager.WIFI_MODE_FULL_HIGH_PERF,
+                "SmsReceiver:wifi"
+            )?.apply {
+                setReferenceCounted(false)
+                acquire()
+            }
+        } catch (e: Exception) { /* 忽略 */ }
+    }
+
+    private fun releaseLocks() {
+        try { wakeLock?.let { if (it.isHeld) it.release() } } catch (e: Exception) {}
+        try { wifiLock?.let { if (it.isHeld) it.release() } } catch (e: Exception) {}
+        wakeLock = null
+        wifiLock = null
     }
 
     private fun onSms(sms: SmsMessage) {
