@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 短信气泡主体 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M22,30 L86,30 A8,8 0 0 1 94,38 L94,64 A8,8 0 0 1 86,72 L50,72 L34,84 L34,72 L22,72 A8,8 0 0 1 14,64 L14,38 A8,8 0 0 1 22,30 Z" />
+    <!-- 气泡内的对勾 -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M46,51 L55,60 L73,40 L79,46 L55,72 L40,57 Z" />
+</vector>
