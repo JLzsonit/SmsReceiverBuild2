@@ -45,12 +45,13 @@ class NtfySubscriber(
     }
 
     private fun loop() {
+        val url = Endpoint.subscribeUrl(server, topic)
         onStatus("正在连接 $server …", false)
         while (running) {
             try {
                 // since=all：首次连接补拉缓存中的历史消息；后续重连也由此补齐断线期间的消息
                 val request = Request.Builder()
-                    .url("$server/$topic/json?since=all")
+                    .url(url)
                     .build()
 
                 client.newCall(request).execute().use { response ->
@@ -70,7 +71,7 @@ class NtfySubscriber(
                 }
             } catch (e: Exception) {
                 if (!running) return
-                onStatus("网络异常：${e.message ?: "未知"}，5 秒后重连", false)
+                onStatus("${Endpoint.friendlyError(e)}，5 秒后重连", false)
             }
             sleepBeforeRetry()
         }
