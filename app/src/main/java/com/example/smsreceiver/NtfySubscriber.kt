@@ -108,7 +108,8 @@ class NtfySubscriber(
      * code 等都能识别）：先按常见字段名匹配，找不到就取最长的字符串字段当正文。
      * 解析失败（例如纯文本）返回 null，由调用方按纯文本处理。
      */
-    private fun parseSms(text: String, ntfyTime: Long): SmsMessage? = try {
+    private fun parseSms(text: String, ntfyTime: Long): SmsMessage? {
+      return try {
         val obj = JsonParser.parseString(text).asJsonObject
 
         // 在候选字段名里按优先级取第一个非空字符串
@@ -161,8 +162,9 @@ class NtfySubscriber(
             device = firstStr("device", "device_name", "deviceName", "设备", "设备名"),
             timestamp = firstTime("time", "timestamp", "date", "时间").takeIf { it > 0 } ?: ntfyTime * 1000
         )
-    } catch (e: Exception) {
+      } catch (e: Exception) {
         null
+      }
     }
 
     private fun sleepBeforeRetry() {
