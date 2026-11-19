@@ -623,7 +623,7 @@ class MainActivity : ComponentActivity() {
                 SettingsRow(
                     icon = Icons.Filled.Info,
                     title = "关于",
-                    subtitle = "短信接收端 v1.3 · 配合 SmsForwarder 使用",
+                    subtitle = "短信接收端 v1.4 · 配合 SmsForwarder 使用",
                     onClick = {}
                 )
                 Spacer(Modifier.height(24.dp))
