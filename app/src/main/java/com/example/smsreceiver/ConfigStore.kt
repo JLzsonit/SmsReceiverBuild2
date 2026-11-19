@@ -20,15 +20,15 @@ object ConfigStore {
     fun get(context: Context): AppConfig {
         val p = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
         return AppConfig(
-            server = normalize(p.getString(KEY_SERVER, DEFAULT_SERVER) ?: DEFAULT_SERVER),
+            server = Endpoint.normalizeServer(p.getString(KEY_SERVER, DEFAULT_SERVER) ?: DEFAULT_SERVER),
             topic = p.getString(KEY_TOPIC, "") ?: ""
         )
     }
 
     fun save(context: Context, server: String, topic: String) {
         context.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit()
-            .putString(KEY_SERVER, normalize(server))
-            .putString(KEY_TOPIC, topic.trim())
+            .putString(KEY_SERVER, Endpoint.normalizeServer(server))
+            .putString(KEY_TOPIC, Endpoint.normalizeTopic(topic))
             .apply()
     }
 
