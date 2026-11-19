@@ -76,17 +76,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-/** 给 SmsForwarder 复制用的消息模板 */
-private const val WEBHOOK_TEMPLATE = """
-{
-  "type": "sms",
-  "from": "[[from]]",
-  "msg": "[[msg]]",
-  "device": "[[device_name]]",
-  "time": [[timestamp]]
-}
-"""
-
 class MainActivity : ComponentActivity() {
 
     private val notifPermissionLauncher =
@@ -221,6 +210,7 @@ class MainActivity : ComponentActivity() {
         val initial = remember { ConfigStore.get(this@MainActivity) }
         var serverText by remember { mutableStateOf(initial.server) }
         var topicText by remember { mutableStateOf(initial.topic) }
+        var templateText by remember { mutableStateOf(initial.template) }
         var testing by remember { mutableStateOf(false) }
         var testResult by remember { mutableStateOf("") }
         val ctx = LocalContext.current
@@ -412,14 +402,46 @@ class MainActivity : ComponentActivity() {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.Message, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.width(8.dp))
-                        Text("消息模板（JSON，含号码+设备+时间）", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Text("消息模板（可自定义，改完点复制）", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "[[msg]] 是短信正文、[[from]] 是发件人、[[device_name]] 是设备名、[[timestamp]] 是时间。" +
+                        "字段名可随意改（如把 msg 改成 content），App 都能识别。",
+                        fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Spacer(Modifier.height(8.dp))
-                    Text(WEBHOOK_TEMPLATE.trimIndent(), fontFamily = FontFamily.Monospace, fontSize = 12.sp)
-                    TextButton(onClick = { copyText("消息模板", WEBHOOK_TEMPLATE.trimIndent()) }) {
-                        Icon(Icons.Filled.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("复制模板")
+                    OutlinedTextField(
+                        value = templateText,
+                        onValueChange = {
+                            templateText = it
+                            ConfigStore.saveTemplate(ctx, it)   // 输入即保存，下次打开还在
+                        },
+                        label = { Text("消息模板") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 6,
+                        maxLines = 14,
+                        textStyle = androidx.compose.ui.text.TextStyle(
+                            fontFamily = FontFamily.Monospace, fontSize = 12.sp
+                        )
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Row {
+                        TextButton(onClick = { copyText("消息模板", templateText) }) {
+                            Icon(Icons.Filled.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("复制模板")
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(onClick = {
+                            templateText = ConfigStore.DEFAULT_TEMPLATE
+                            ConfigStore.saveTemplate(ctx, ConfigStore.DEFAULT_TEMPLATE)
+                            Toast.makeText(ctx, "已恢复默认模板", Toast.LENGTH_SHORT).show()
+                        }) {
+                            Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("恢复默认")
+                        }
                     }
                 }
             }
@@ -560,7 +582,7 @@ class MainActivity : ComponentActivity() {
                 SettingsRow(
                     icon = Icons.Filled.Info,
                     title = "关于",
-                    subtitle = "短信接收端 v1.2 · 配合 SmsForwarder 使用",
+                    subtitle = "短信接收端 v1.3 · 配合 SmsForwarder 使用",
                     onClick = {}
                 )
                 Spacer(Modifier.height(24.dp))
