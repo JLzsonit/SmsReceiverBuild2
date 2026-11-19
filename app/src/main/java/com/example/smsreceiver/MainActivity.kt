@@ -141,6 +141,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /** 是否已被加入电池优化白名单 */
+    private fun isBatteryOptimizationIgnored(): Boolean {
+        if (Build.VERSION.SDK_INT < 23) return true
+        val pm = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+        return pm.isIgnoringBatteryOptimizations(packageName)
+    }
+
     /** 引导用户去关闭电池优化（长连接保活的关键一步） */
     private fun requestIgnoreBatteryOptimization() {
         @Suppress("BatteryLife")
@@ -149,7 +156,10 @@ class MainActivity : ComponentActivity() {
         try {
             startActivity(intent)
         } catch (e: Exception) {
-            // 部分设备不支持该页面，忽略
+            // 部分设备不支持该页面，跳转到通用电池设置
+            try {
+                startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+            } catch (_: Exception) {}
         }
     }
 
@@ -576,6 +586,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun SettingsTab() {
         var autofillOn by remember { mutableStateOf(isAutofillEnabled()) }
+        var batteryIgnored by remember { mutableStateOf(isBatteryOptimizationIgnored()) }
         val openAutofill = {
             openAutofillSettings()
             autofillOn = isAutofillEnabled()
@@ -587,6 +598,51 @@ class MainActivity : ComponentActivity() {
         ) {
             TopAppBar(title = { Text("设置") })
             Column(Modifier.padding(horizontal = 16.dp)) {
+                // 保活提示卡：锁屏断连的最关键一步
+                Card(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (batteryIgnored) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Column(Modifier.padding(14.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                if (batteryIgnored) Icons.Filled.CheckCircle else Icons.Filled.BatteryChargingFull,
+                                contentDescription = null,
+                                tint = if (batteryIgnored) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.error
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                if (batteryIgnored) "后台保活已开启" else "⚠ 后台保活未开启",
+                                fontWeight = FontWeight.Bold, fontSize = 14.sp
+                            )
+                        }
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            if (batteryIgnored)
+                                "长连接会一直保持，锁屏、退到桌面都能实时收。"
+                            else
+                                "请点下面的「忽略电池优化」并选择「允许」，否则锁屏几分钟后连接会被系统掐断。",
+                            fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (!batteryIgnored) {
+                            Spacer(Modifier.height(8.dp))
+                            Button(onClick = {
+                                requestIgnoreBatteryOptimization()
+                                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                                    batteryIgnored = isBatteryOptimizationIgnored()
+                                }, 800)
+                            }) {
+                                Text("一键开启后台保活", fontSize = 12.sp)
+                            }
+                        }
+                    }
+                }
                 SettingsRow(
                     icon = Icons.Filled.Smartphone,
                     title = "验证码自动填充",
@@ -596,8 +652,13 @@ class MainActivity : ComponentActivity() {
                 SettingsRow(
                     icon = Icons.Filled.BatteryChargingFull,
                     title = "忽略电池优化",
-                    subtitle = "防止息屏后长连接被杀，保证实时接收",
-                    onClick = { requestIgnoreBatteryOptimization() }
+                    subtitle = if (batteryIgnored) "已加入白名单 · 点此管理" else "未开启 · 锁屏后会断连，点此开启",
+                    onClick = {
+                        requestIgnoreBatteryOptimization()
+                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                            batteryIgnored = isBatteryOptimizationIgnored()
+                        }, 800)
+                    }
                 )
                 SettingsRow(
                     icon = Icons.Filled.Refresh,
@@ -623,7 +684,7 @@ class MainActivity : ComponentActivity() {
                 SettingsRow(
                     icon = Icons.Filled.Info,
                     title = "关于",
-                    subtitle = "短信接收端 v1.4 · 配合 SmsForwarder 使用",
+                    subtitle = "短信接收端 v1.5 · 配合 SmsForwarder 使用",
                     onClick = {}
                 )
                 Spacer(Modifier.height(24.dp))
