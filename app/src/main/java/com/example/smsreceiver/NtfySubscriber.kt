@@ -23,8 +23,11 @@ class NtfySubscriber(
     private val server: String = ConfigStore.DEFAULT_SERVER
 ) {
     private val client = OkHttpClient.Builder()
-        .readTimeout(0, TimeUnit.MILLISECONDS) // 长连接：读超时设为无限
+        // 服务器每 30 秒发一次心跳；读超时设 90 秒：正常连接永远不会被误判，
+        // 但 NAT 静默断线（锁屏后常见）能在 90 秒内被发现并重连，不再一直卡死。
+        .readTimeout(90, TimeUnit.SECONDS)
         .connectTimeout(15, TimeUnit.SECONDS)
+        .retryOnConnectionFailure(true)
         .build()
 
     @Volatile private var running = false
