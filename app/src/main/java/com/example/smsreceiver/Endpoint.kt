@@ -89,9 +89,9 @@ object Endpoint {
         }
     }
 
-    /** 完整订阅地址 */
+    /** 完整订阅地址：heartbeat=30 让服务器每 30 秒发一次心跳，穿透 NAT 并便于检测断线 */
     fun subscribeUrl(server: String, topic: String): String =
-        "${normalizeServer(server)}/${normalizeTopic(topic)}/json?since=all"
+        "${normalizeServer(server)}/${normalizeTopic(topic)}/json?since=all&heartbeat=30"
 
     /** 给 SmsForwarder 用的 Webhook 地址 */
     fun webhookUrl(server: String, topic: String): String =
