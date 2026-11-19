@@ -1,10 +1,11 @@
-# 安卓短信转发接收端（SmsReceiver · ntfy 版）
+# 安卓短信接收（SmsReceiver · ntfy 版）
 
 **这是一个「安卓手机 → 安卓手机」的短信转发接收端 App：**
 把一台安卓手机收到的短信，实时转发到另一台安卓手机上接收。
 发送端和接收端**都是安卓手机**，不涉及 iPhone、电脑，也不需要自己搭服务器。
 
-> 📥 **下载安装（v1.7 消息详情版）**：[点此下载 APK](https://github.com/JLzsonit/SmsReceiver/releases/download/v1.7/SmsReceiver-v1.7-debug.apk) · [查看全部版本](https://github.com/JLzsonit/SmsReceiver/releases)
+> 📥 **下载安装（v1.8 改名「安卓短信接收」）**：[点此下载 APK](https://github.com/JLzsonit/SmsReceiver/releases/download/v1.8/SmsReceiver-v1.8-debug.apk) · [查看全部版本](https://github.com/JLzsonit/SmsReceiver/releases)
+> 注：v1.8 起 App 名称由「短信接收端」改为「安卓短信接收」，覆盖安装后桌面图标名称会自动更新。
 
 ## 这个项目解决什么问题
 
@@ -121,7 +122,7 @@ curl -d '{"type":"sms","from":"10086","msg":"测试短信","device":"备用机",
 由用户在系统设置里启用，填充时弹候选气泡让用户确认——和 Gboard、密码管理器的体验一致。
 
 1. 打开本 App，点「**点此开启验证码自动填充（系统设置）**」按钮，跳转到系统设置。
-2. 在「自动填充服务」里选择本 App（名称「短信接收端」）。
+2. 在「自动填充服务」里选择本 App（名称「安卓短信接收」）。
 3. 以后在**任意 App**（银行、社交、购物等）的验证码输入框点一下，
    键盘上方会弹出「**填入验证码 xxxxxx**」候选，点一下即自动填入。
 
