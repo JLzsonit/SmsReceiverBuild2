@@ -4,12 +4,31 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- 短信气泡主体 -->
+    <!-- 白色聊天气泡（含左下尾巴），整体收在安全区内 -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M22,30 L86,30 A8,8 0 0 1 94,38 L94,64 A8,8 0 0 1 86,72 L50,72 L34,84 L34,72 L22,72 A8,8 0 0 1 14,64 L14,38 A8,8 0 0 1 22,30 Z" />
-    <!-- 气泡内的对勾 -->
+        android:pathData="M42,36 L66,36 A12,12 0 0 1 78,48 L78,58 A12,12 0 0 1 66,70 L52,70 L40,80 L40,70 L42,70 A12,12 0 0 1 30,58 L30,48 A12,12 0 0 1 42,36 Z" />
+    <!-- 气泡内三个点（消息提示样式） -->
     <path
-        android:fillColor="#1976D2"
-        android:pathData="M46,51 L55,60 L73,40 L79,46 L55,72 L40,57 Z" />
+        android:fillColor="#4F46E5"
+        android:pathData="M44,53 m-4,0 a4,4 0 1 1 8,0 a4,4 0 1 1 -8,0 Z" />
+    <path
+        android:fillColor="#4F46E5"
+        android:pathData="M54,53 m-4,0 a4,4 0 1 1 8,0 a4,4 0 1 1 -8,0 Z" />
+    <path
+        android:fillColor="#4F46E5"
+        android:pathData="M64,53 m-4,0 a4,4 0 1 1 8,0 a4,4 0 1 1 -8,0 Z" />
+    <!-- 右上角绿色「已收到」徽章：白圈 + 绿底 + 白对勾 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M72,42 m-10,0 a10,10 0 1 1 20,0 a10,10 0 1 1 -20,0 Z" />
+    <path
+        android:fillColor="#22C55E"
+        android:pathData="M72,42 m-8.5,0 a8.5,8.5 0 1 1 17,0 a8.5,8.5 0 1 1 -17,0 Z" />
+    <path
+        android:pathData="M68.5,42 L71.5,45 L76.5,39.5"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
 </vector>
