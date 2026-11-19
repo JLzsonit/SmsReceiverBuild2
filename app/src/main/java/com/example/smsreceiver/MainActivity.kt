@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -38,20 +39,25 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Message
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Smartphone
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -585,8 +591,11 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun SettingsTab() {
+        val ctx = LocalContext.current
         var autofillOn by remember { mutableStateOf(isAutofillEnabled()) }
         var batteryIgnored by remember { mutableStateOf(isBatteryOptimizationIgnored()) }
+        var ringtoneIndex by remember { mutableStateOf(ConfigStore.get(ctx).ringtone) }
+        var showRingtoneDialog by remember { mutableStateOf(false) }
         val openAutofill = {
             openAutofillSettings()
             autofillOn = isAutofillEnabled()
@@ -644,6 +653,12 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 SettingsRow(
+                    icon = Icons.Filled.MusicNote,
+                    title = "新短信提示音",
+                    subtitle = "当前：${RingtonePlayer.nameOf(ringtoneIndex)} · 内置 10 种，点此试听/更换",
+                    onClick = { showRingtoneDialog = true }
+                )
+                SettingsRow(
                     icon = Icons.Filled.Smartphone,
                     title = "验证码自动填充",
                     subtitle = if (autofillOn) "已开启 · 点此前往系统设置管理" else "未开启 · 点此前往系统设置开启",
@@ -684,12 +699,83 @@ class MainActivity : ComponentActivity() {
                 SettingsRow(
                     icon = Icons.Filled.Info,
                     title = "关于",
-                    subtitle = "短信接收端 v1.5 · 配合 SmsForwarder 使用",
+                    subtitle = "短信接收端 v1.6 · 配合 SmsForwarder 使用",
                     onClick = {}
                 )
                 Spacer(Modifier.height(24.dp))
             }
         }
+
+        if (showRingtoneDialog) {
+            RingtonePickerDialog(
+                current = ringtoneIndex,
+                onPreview = { RingtonePlayer.preview(ctx, it) },
+                onSelect = { index ->
+                    ringtoneIndex = index
+                    ConfigStore.saveRingtone(ctx, index)
+                    showRingtoneDialog = false
+                    Toast.makeText(
+                        ctx, "已切换为「${RingtonePlayer.nameOf(index)}」", Toast.LENGTH_SHORT
+                    ).show()
+                },
+                onDismiss = { showRingtoneDialog = false }
+            )
+        }
+    }
+
+    /** 10 个内置铃声选择弹窗：整行点选保存，右侧播放键可先试听 */
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun RingtonePickerDialog(
+        current: Int,
+        onPreview: (Int) -> Unit,
+        onSelect: (Int) -> Unit,
+        onDismiss: () -> Unit
+    ) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("新短信提示音 · 内置 10 种") },
+            text = {
+                Column {
+                    Text(
+                        "点右侧 ▶ 试听，点整行即选中并自动保存",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    LazyColumn(Modifier.heightIn(max = 420.dp)) {
+                        items(RingtonePlayer.RINGTONES.size) { index ->
+                            val selected = index == current
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onSelect(index) }
+                                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(selected = selected, onClick = { onSelect(index) })
+                                Text(
+                                    RingtonePlayer.RINGTONES[index].name,
+                                    Modifier.weight(1f),
+                                    fontSize = 14.sp,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                                )
+                                IconButton(onClick = { onPreview(index) }) {
+                                    Icon(
+                                        Icons.Filled.PlayArrow,
+                                        contentDescription = "试听",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = onDismiss) { Text("关闭") }
+            }
+        )
     }
 
     @Composable
