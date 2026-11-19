@@ -9,7 +9,8 @@ import android.content.Context
 data class AppConfig(
     val server: String = ConfigStore.DEFAULT_SERVER,
     val topic: String = "",
-    val template: String = ConfigStore.DEFAULT_TEMPLATE
+    val template: String = ConfigStore.DEFAULT_TEMPLATE,
+    val ringtone: Int = 0
 )
 
 object ConfigStore {
@@ -30,13 +31,15 @@ object ConfigStore {
     private const val KEY_SERVER = "server"
     private const val KEY_TOPIC = "topic"
     private const val KEY_TEMPLATE = "template"
+    private const val KEY_RINGTONE = "ringtone"
 
     fun get(context: Context): AppConfig {
         val p = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
         return AppConfig(
             server = Endpoint.normalizeServer(p.getString(KEY_SERVER, DEFAULT_SERVER) ?: DEFAULT_SERVER),
             topic = p.getString(KEY_TOPIC, "") ?: "",
-            template = p.getString(KEY_TEMPLATE, null) ?: DEFAULT_TEMPLATE
+            template = p.getString(KEY_TEMPLATE, null) ?: DEFAULT_TEMPLATE,
+            ringtone = p.getInt(KEY_RINGTONE, 0)
         )
     }
 
@@ -51,6 +54,14 @@ object ConfigStore {
     fun saveTemplate(context: Context, template: String) {
         context.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit()
             .putString(KEY_TEMPLATE, template)
+            .apply()
+    }
+
+    /** 保存用户选择的内置提示音序号 */
+    fun saveRingtone(context: Context, index: Int) {
+        val safe = index.coerceIn(0 until RingtonePlayer.RINGTONES.size)
+        context.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit()
+            .putInt(KEY_RINGTONE, safe)
             .apply()
     }
 
