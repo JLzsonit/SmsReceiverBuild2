@@ -819,7 +819,7 @@ class MainActivity : ComponentActivity() {
                 SettingsRow(
                     icon = Icons.Filled.Info,
                     title = "关于",
-                    subtitle = "短信接收端 v1.7 · 配合 SmsForwarder 使用",
+                    subtitle = "安卓短信接收 v1.8 · 安卓→安卓短信转发接收端",
                     onClick = {}
                 )
                 Spacer(Modifier.height(24.dp))
