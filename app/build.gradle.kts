@@ -11,8 +11,8 @@ android {
         applicationId = "com.example.smsreceiver"
         minSdk = 26
         targetSdk = 34
-        versionCode = 9
-        versionName = "1.8"
+        versionCode = 10
+        versionName = "1.9"
     }
 
     // 固定签名：仓库内自带 keystore，保证每次云端构建签名一致，
