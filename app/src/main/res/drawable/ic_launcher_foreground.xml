@@ -4,31 +4,28 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- 大号白色气泡：更大占比、更大圆角（M3 Expressive 风格），收在安全区内 -->
+    <!-- 琥珀色小气泡（发送端）：左上，尾巴朝左下 -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M45,28 L51,28 A9,9 0 0 1 60,37 L60,39 A9,9 0 0 1 51,48 L45,48 A9,9 0 0 1 36,39 L36,37 A9,9 0 0 1 45,28 Z" />
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M44,47 L36,54 L36,47 Z" />
+    <path
+        android:fillColor="#B45309"
+        android:pathData="M48,38 m-3,0 a3,3 0 1 1 6,0 a3,3 0 1 1 -6,0 Z" />
+    <!-- 白色大气泡（接收端）：右下，尾巴朝下 -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M46,32 L64,32 A14,14 0 0 1 78,46 L78,58 A14,14 0 0 1 64,72 L54,72 L42,82 L42,72 L46,72 A14,14 0 0 1 32,58 L32,46 A14,14 0 0 1 46,32 Z" />
-    <!-- 气泡内三个点：用同族色阶做出活泼的层次感 -->
-    <path
-        android:fillColor="#4338CA"
-        android:pathData="M46,52 m-5,0 a5,5 0 1 1 10,0 a5,5 0 1 1 -10,0 Z" />
-    <path
-        android:fillColor="#6366F1"
-        android:pathData="M56,52 m-5,0 a5,5 0 1 1 10,0 a5,5 0 1 1 -10,0 Z" />
-    <path
-        android:fillColor="#A5B4FC"
-        android:pathData="M66,52 m-5,0 a5,5 0 1 1 10,0 a5,5 0 1 1 -10,0 Z" />
-    <!-- 右上角绿色「已收到」徽章：白圈 + 绿底 + 白对勾 -->
+        android:pathData="M52,50 L66,50 A10,10 0 0 1 76,60 L76,62 A10,10 0 0 1 66,72 L54,72 A10,10 0 0 1 44,62 L44,60 A10,10 0 0 1 54,50 Z" />
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M70,43 m-12,0 a12,12 0 1 1 24,0 a12,12 0 1 1 -24,0 Z" />
+        android:pathData="M62,71 L62,80 L70,71 Z" />
+    <!-- 大气泡内两个点，暗示正在接收消息 -->
     <path
-        android:fillColor="#22C55E"
-        android:pathData="M70,43 m-10.5,0 a10.5,10.5 0 1 1 21,0 a10.5,10.5 0 1 1 -21,0 Z" />
+        android:fillColor="#6D28D9"
+        android:pathData="M55,61 m-4,0 a4,4 0 1 1 8,0 a4,4 0 1 1 -8,0 Z" />
     <path
-        android:pathData="M66.5,43.5 L69.5,46.5 L74.5,40.5"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="3"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
+        android:fillColor="#A78BFA"
+        android:pathData="M65,61 m-4,0 a4,4 0 1 1 8,0 a4,4 0 1 1 -8,0 Z" />
 </vector>
