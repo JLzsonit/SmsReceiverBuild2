@@ -114,6 +114,8 @@ class ReceiverService : Service() {
     private fun onSms(sms: SmsMessage) {
         AppBus.addMessage(applicationContext, sms)
         showNotification(sms)
+        // 播放用户在设置页选中的内置提示音（完全静音模式下不响）
+        RingtonePlayer.play(applicationContext, ConfigStore.get(applicationContext).ringtone)
     }
 
     // ---------------- 通知 ----------------
