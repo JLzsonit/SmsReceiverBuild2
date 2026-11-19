@@ -11,13 +11,30 @@ android {
         applicationId = "com.example.smsreceiver"
         minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.3"
+        versionCode = 5
+        versionName = "1.4"
+    }
+
+    // 固定签名：仓库内自带 keystore，保证每次云端构建签名一致，
+    // 用户更新 App 时可直接覆盖安装，不再报"签名冲突"。
+    signingConfigs {
+        create("release") {
+            storeFile = file("keystore/debug.p12")
+            storePassword = "android123"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android123"
+            storeType = "PKCS12"
+        }
     }
 
     buildTypes {
+        debug {
+            // debug 构建也用固定签名，云端产出的 app-debug.apk 签名不再随机
+            signingConfig = signingConfigs.getByName("release")
+        }
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
