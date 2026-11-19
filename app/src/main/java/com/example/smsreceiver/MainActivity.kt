@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContentCopy
@@ -517,6 +518,13 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun MessagesTab(msgs: List<SmsMessage>) {
         val fmt = remember { SimpleDateFormat("MM-dd HH:mm:ss", Locale.getDefault()) }
+        // 点某条消息进入详情：长短信在列表里看不全，详情页可以完整阅读和单独复制
+        var selected by remember { mutableStateOf<SmsMessage?>(null) }
+        val detail = selected
+        if (detail != null) {
+            MessageDetail(detail, onBack = { selected = null })
+            return
+        }
         Column(Modifier.fillMaxSize()) {
             TopAppBar(
                 title = { Text("消息") },
@@ -546,6 +554,7 @@ class MainActivity : ComponentActivity() {
                             Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp, vertical = 5.dp)
+                                .clickable { selected = m }
                         ) {
                             Column(Modifier.padding(14.dp)) {
                                 Row {
@@ -558,7 +567,8 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                                 Spacer(Modifier.height(6.dp))
-                                Text(m.msg, fontSize = 15.sp)
+                                // 列表里限制行数，完整内容点进去看
+                                Text(m.msg, fontSize = 15.sp, maxLines = 3)
                                 Spacer(Modifier.height(8.dp))
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
@@ -578,11 +588,121 @@ class MainActivity : ComponentActivity() {
                                             Text("复制 $code", fontSize = 12.sp)
                                         }
                                     }
+                                    Icon(
+                                        Icons.Filled.KeyboardArrowRight,
+                                        contentDescription = "查看详情",
+                                        modifier = Modifier.size(18.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                 }
                             }
                         }
                     }
                 }
+            }
+        }
+    }
+
+    /** 消息详情：长短信完整展示，可单独复制验证码或复制全文 */
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun MessageDetail(m: SmsMessage, onBack: () -> Unit) {
+        val fmt = remember { SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()) }
+        val code = remember(m.msg) { CodeExtractor.extract(m.msg) }
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
+            TopAppBar(
+                title = { Text("短信详情") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "返回")
+                    }
+                }
+            )
+            Column(Modifier.padding(16.dp)) {
+                Card(
+                    Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("发件人", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.height(4.dp))
+                        Text(m.from.ifBlank { "未知号码" }, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            "时间：${fmt.format(Date(if (m.timestamp > 0) m.timestamp else m.receivedAt))}",
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "设备：${m.device.ifBlank { "-" }}",
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+                Text("短信内容（完整）", fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(8.dp))
+                Card(
+                    Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Text(
+                        m.msg,
+                        Modifier.padding(16.dp),
+                        fontSize = 16.sp,
+                        lineHeight = 26.sp
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedButton(
+                        onClick = { copyText("短信全文", m.msg) },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            Icons.Filled.ContentCopy,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text("复制全文")
+                    }
+                    if (code != null) {
+                        Spacer(Modifier.width(8.dp))
+                        Button(
+                            onClick = { copyText("验证码", code) },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                Icons.Filled.ContentCopy,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text("复制验证码")
+                        }
+                    }
+                }
+                if (code != null) {
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        "识别到验证码：$code",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                Spacer(Modifier.height(24.dp))
             }
         }
     }
@@ -699,7 +819,7 @@ class MainActivity : ComponentActivity() {
                 SettingsRow(
                     icon = Icons.Filled.Info,
                     title = "关于",
-                    subtitle = "短信接收端 v1.6 · 配合 SmsForwarder 使用",
+                    subtitle = "短信接收端 v1.7 · 配合 SmsForwarder 使用",
                     onClick = {}
                 )
                 Spacer(Modifier.height(24.dp))
