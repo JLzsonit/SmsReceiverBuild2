@@ -115,8 +115,8 @@ class MainActivity : ComponentActivity() {
 
     private fun startService(server: String, topic: String) {
         val intent = Intent(this, ReceiverService::class.java)
-            .putExtra(ReceiverService.EXTRA_SERVER, server)
-            .putExtra(ReceiverService.EXTRA_TOPIC, topic)
+            .putExtra(ReceiverService.EXTRA_SERVER, Endpoint.normalizeServer(server))
+            .putExtra(ReceiverService.EXTRA_TOPIC, Endpoint.normalizeTopic(topic))
         ContextCompat.startForegroundService(this, intent)
     }
 
@@ -221,7 +221,13 @@ class MainActivity : ComponentActivity() {
         val initial = remember { ConfigStore.get(this@MainActivity) }
         var serverText by remember { mutableStateOf(initial.server) }
         var topicText by remember { mutableStateOf(initial.topic) }
-        val webhook = "${ConfigStore.normalize(serverText)}/${topicText.trim()}"
+        var testing by remember { mutableStateOf(false) }
+        var testResult by remember { mutableStateOf("") }
+        val ctx = LocalContext.current
+
+        val normServer = Endpoint.normalizeServer(serverText)
+        val normTopic = Endpoint.normalizeTopic(topicText)
+        val webhook = Endpoint.webhookUrl(serverText, topicText)
 
         Column(
             Modifier
@@ -260,10 +266,26 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            // 测试结果显示
+            if (testResult.isNotBlank()) {
+                Spacer(Modifier.height(8.dp))
+                Card(
+                    Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                ) {
+                    Text(
+                        testResult,
+                        Modifier.padding(12.dp),
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+            }
+
             Spacer(Modifier.height(16.dp))
-            Text("① 这里填 ntfy 服务器地址", fontWeight = FontWeight.Bold)
+            Text("① ntfy 服务器地址", fontWeight = FontWeight.Bold)
             Text(
-                "默认 ntfy.sh 免费公共服务器；若自建 ntfy，把地址改成你的域名即可（要带 https://）",
+                "保持默认 ntfy.sh 即可。地址不用带主题名、不用带 /json，填错会自动纠正",
                 fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(6.dp))
@@ -274,12 +296,19 @@ class MainActivity : ComponentActivity() {
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
+            if (normServer != serverText.trim()) {
+                Text("将按 $normServer 连接", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
+            }
             TextButton(onClick = { serverText = ConfigStore.DEFAULT_SERVER }) {
                 Text("恢复默认 ntfy.sh")
             }
 
             Spacer(Modifier.height(8.dp))
-            Text("② 主题名（相当于密码，要复杂，别人猜不到）", fontWeight = FontWeight.Bold)
+            Text("② 主题名（就是密码，要复杂、别人猜不到）", fontWeight = FontWeight.Bold)
+            Text(
+                "只能用英文字母、数字、横线。中文和空格会自动转换；两台手机填同一个主题即可互通",
+                fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             OutlinedTextField(
                 value = topicText,
                 onValueChange = { topicText = it },
@@ -287,17 +316,20 @@ class MainActivity : ComponentActivity() {
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
+            if (normTopic != topicText.trim() && topicText.isNotBlank()) {
+                Text("将按 $normTopic 订阅", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
+            }
+
             Spacer(Modifier.height(10.dp))
             Row {
                 Button(
                     onClick = {
-                        val s = ConfigStore.normalize(serverText)
-                        val t = topicText.trim()
+                        val t = Endpoint.normalizeTopic(topicText)
                         if (t.isBlank()) {
-                            Toast.makeText(this@MainActivity, "请先填主题名", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(ctx, "请先填主题名", Toast.LENGTH_SHORT).show()
                         } else {
-                            ConfigStore.save(this@MainActivity, s, t)
-                            startService(s, t)
+                            ConfigStore.save(this@MainActivity, serverText, t)
+                            startService(normServer, t)
                         }
                     },
                     modifier = Modifier.weight(1f)
@@ -314,6 +346,30 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            TextButton(
+                onClick = {
+                    testing = true
+                    testResult = "正在测试连接…"
+                    ConnectionTester.test(serverText, topicText) { ok, msg ->
+                        testing = false
+                        testResult = (if (ok) "✓ " else "✗ ") + msg
+                    }
+                },
+                enabled = !testing
+            ) {
+                Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(if (testing) "测试中…" else "测试连接（连不上先点这里看原因）")
+            }
+
+            Spacer(Modifier.height(12.dp))
+            Text(
+                "连不上怎么办：先点上面「测试连接」。若提示 DNS/解析失败，switch 一下 WiFi 和流量；" +
+                    "若提示连接被重置，说明当前网络对 ntfy.sh 不稳定，可换网络或稍后重试。" +
+                    "ntfy.sh 在国内时好时坏，不是 App 坏了。",
+                fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
             Spacer(Modifier.height(20.dp))
             Text("③ 复制下面的地址去 SmsForwarder 配置", fontWeight = FontWeight.Bold)
             Text(
@@ -329,11 +385,11 @@ class MainActivity : ComponentActivity() {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.Link, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.width(8.dp))
-                        Text("Webhook URL", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Text("Webhook URL（发消息到这里）", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        webhook.ifBlank { "（先填服务器地址和主题名）" },
+                        webhook,
                         fontFamily = FontFamily.Monospace,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.primary
@@ -356,7 +412,7 @@ class MainActivity : ComponentActivity() {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.Message, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.width(8.dp))
-                        Text("消息模板（JSON）", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Text("消息模板（JSON，含号码+设备+时间）", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
                     Spacer(Modifier.height(8.dp))
                     Text(WEBHOOK_TEMPLATE.trimIndent(), fontFamily = FontFamily.Monospace, fontSize = 12.sp)
@@ -370,7 +426,7 @@ class MainActivity : ComponentActivity() {
 
             Spacer(Modifier.height(12.dp))
             Text(
-                "提示：主题名就是密码，设得越长越安全；只要备用机和这台手机都能上网， anywhere 都能实时收到。",
+                "保存并订阅后，状态栏显示「已连接」即成功。只要两台手机都能上网，无论多远都能实时收到。",
                 fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(24.dp))
@@ -504,7 +560,7 @@ class MainActivity : ComponentActivity() {
                 SettingsRow(
                     icon = Icons.Filled.Info,
                     title = "关于",
-                    subtitle = "短信接收端 v1.1 · 配合 SmsForwarder 使用",
+                    subtitle = "短信接收端 v1.2 · 配合 SmsForwarder 使用",
                     onClick = {}
                 )
                 Spacer(Modifier.height(24.dp))
