@@ -4,31 +4,31 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- 白色聊天气泡（含左下尾巴），整体收在安全区内 -->
+    <!-- 大号白色气泡：更大占比、更大圆角（M3 Expressive 风格），收在安全区内 -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M42,36 L66,36 A12,12 0 0 1 78,48 L78,58 A12,12 0 0 1 66,70 L52,70 L40,80 L40,70 L42,70 A12,12 0 0 1 30,58 L30,48 A12,12 0 0 1 42,36 Z" />
-    <!-- 气泡内三个点（消息提示样式） -->
+        android:pathData="M46,32 L64,32 A14,14 0 0 1 78,46 L78,58 A14,14 0 0 1 64,72 L54,72 L42,82 L42,72 L46,72 A14,14 0 0 1 32,58 L32,46 A14,14 0 0 1 46,32 Z" />
+    <!-- 气泡内三个点：用同族色阶做出活泼的层次感 -->
     <path
-        android:fillColor="#4F46E5"
-        android:pathData="M44,53 m-4,0 a4,4 0 1 1 8,0 a4,4 0 1 1 -8,0 Z" />
+        android:fillColor="#4338CA"
+        android:pathData="M46,52 m-5,0 a5,5 0 1 1 10,0 a5,5 0 1 1 -10,0 Z" />
     <path
-        android:fillColor="#4F46E5"
-        android:pathData="M54,53 m-4,0 a4,4 0 1 1 8,0 a4,4 0 1 1 -8,0 Z" />
+        android:fillColor="#6366F1"
+        android:pathData="M56,52 m-5,0 a5,5 0 1 1 10,0 a5,5 0 1 1 -10,0 Z" />
     <path
-        android:fillColor="#4F46E5"
-        android:pathData="M64,53 m-4,0 a4,4 0 1 1 8,0 a4,4 0 1 1 -8,0 Z" />
+        android:fillColor="#A5B4FC"
+        android:pathData="M66,52 m-5,0 a5,5 0 1 1 10,0 a5,5 0 1 1 -10,0 Z" />
     <!-- 右上角绿色「已收到」徽章：白圈 + 绿底 + 白对勾 -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M72,42 m-10,0 a10,10 0 1 1 20,0 a10,10 0 1 1 -20,0 Z" />
+        android:pathData="M70,43 m-12,0 a12,12 0 1 1 24,0 a12,12 0 1 1 -24,0 Z" />
     <path
         android:fillColor="#22C55E"
-        android:pathData="M72,42 m-8.5,0 a8.5,8.5 0 1 1 17,0 a8.5,8.5 0 1 1 -17,0 Z" />
+        android:pathData="M70,43 m-10.5,0 a10.5,10.5 0 1 1 21,0 a10.5,10.5 0 1 1 -21,0 Z" />
     <path
-        android:pathData="M68.5,42 L71.5,45 L76.5,39.5"
+        android:pathData="M66.5,43.5 L69.5,46.5 L74.5,40.5"
         android:strokeColor="#FFFFFF"
-        android:strokeWidth="2.6"
+        android:strokeWidth="3"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
 </vector>
