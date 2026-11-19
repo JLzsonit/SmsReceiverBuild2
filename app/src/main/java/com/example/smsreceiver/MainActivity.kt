@@ -67,8 +67,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -210,10 +212,24 @@ class MainActivity : ComponentActivity() {
         val initial = remember { ConfigStore.get(this@MainActivity) }
         var serverText by remember { mutableStateOf(initial.server) }
         var topicText by remember { mutableStateOf(initial.topic) }
-        var templateText by remember { mutableStateOf(initial.template) }
+        var templateField by remember {
+            mutableStateOf(TextFieldValue(initial.template, TextRange(initial.template.length)))
+        }
         var testing by remember { mutableStateOf(false) }
         var testResult by remember { mutableStateOf("") }
         val ctx = LocalContext.current
+
+        // 在光标处插入占位符（无光标时追加到末尾），并保持光标在插入内容之后
+        fun insertPlaceholder(token: String) {
+            val v = templateField
+            val start = if (v.selection.start >= 0 && v.selection.start <= v.text.length)
+                v.selection.start else v.text.length
+            val end = if (v.selection.end in start..v.text.length) v.selection.end else start
+            val newText = v.text.substring(0, start) + token + v.text.substring(end)
+            val pos = start + token.length
+            templateField = TextFieldValue(newText, TextRange(pos))
+            ConfigStore.saveTemplate(ctx, newText)
+        }
 
         val normServer = Endpoint.normalizeServer(serverText)
         val normTopic = Endpoint.normalizeTopic(topicText)
@@ -406,18 +422,42 @@ class MainActivity : ComponentActivity() {
                     }
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        "[[msg]] 是短信正文、[[from]] 是发件人、[[device_name]] 是设备名、[[timestamp]] 是时间。" +
-                        "字段名可随意改（如把 msg 改成 content），App 都能识别。",
+                        "点下面的按钮，把占位符插到光标处，不用自己打（避免格式出错）。",
                         fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(Modifier.height(8.dp))
+                    // 占位符快捷按钮：像 SmsForwarder 一样点一下即插入
+                    val tokens = listOf(
+                        "短信正文" to "[[msg]]",
+                        "发件人" to "[[from]]",
+                        "设备名" to "[[device_name]]",
+                        "时间" to "[[timestamp]]"
+                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        tokens.chunked(2).forEach { row ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                row.forEach { (label, token) ->
+                                    Button(
+                                        onClick = { insertPlaceholder(token) },
+                                        modifier = Modifier.weight(1f),
+                                        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                                            horizontal = 4.dp, vertical = 4.dp
+                                        )
+                                    ) {
+                                        Text(label, fontSize = 11.sp, maxLines = 1)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
-                        value = templateText,
+                        value = templateField,
                         onValueChange = {
-                            templateText = it
-                            ConfigStore.saveTemplate(ctx, it)   // 输入即保存，下次打开还在
+                            templateField = it
+                            ConfigStore.saveTemplate(ctx, it.text)   // 输入即保存，下次打开还在
                         },
-                        label = { Text("消息模板") },
+                        label = { Text("消息模板（点上方按钮插入占位符，也可直接改）") },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 6,
                         maxLines = 14,
@@ -427,15 +467,16 @@ class MainActivity : ComponentActivity() {
                     )
                     Spacer(Modifier.height(4.dp))
                     Row {
-                        TextButton(onClick = { copyText("消息模板", templateText) }) {
+                        TextButton(onClick = { copyText("消息模板", templateField.text) }) {
                             Icon(Icons.Filled.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(6.dp))
                             Text("复制模板")
                         }
                         Spacer(Modifier.width(8.dp))
                         TextButton(onClick = {
-                            templateText = ConfigStore.DEFAULT_TEMPLATE
-                            ConfigStore.saveTemplate(ctx, ConfigStore.DEFAULT_TEMPLATE)
+                            val def = ConfigStore.DEFAULT_TEMPLATE
+                            templateField = TextFieldValue(def, TextRange(def.length))
+                            ConfigStore.saveTemplate(ctx, def)
                             Toast.makeText(ctx, "已恢复默认模板", Toast.LENGTH_SHORT).show()
                         }) {
                             Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
