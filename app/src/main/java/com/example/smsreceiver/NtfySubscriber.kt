@@ -103,28 +103,64 @@ class NtfySubscriber(
         onMessage(sms)
     }
 
-    /** 尝试按 SmsForwarder 模板 JSON 解析，失败返回 null */
+    /**
+     * 尝试按 SmsForwarder 模板 JSON 解析。字段名可自定义（比如把 msg 改成 content、正文、
+     * code 等都能识别）：先按常见字段名匹配，找不到就取最长的字符串字段当正文。
+     * 解析失败（例如纯文本）返回 null，由调用方按纯文本处理。
+     */
     private fun parseSms(text: String, ntfyTime: Long): SmsMessage? = try {
         val obj = JsonParser.parseString(text).asJsonObject
-        if (!obj.has("msg")) null else {
 
-        fun str(name: String): String =
-            obj.get(name)?.takeIf { !it.isJsonNull }?.asString ?: ""
+        // 在候选字段名里按优先级取第一个非空字符串
+        fun firstStr(vararg names: String): String {
+            for (n in names) {
+                val v = obj.get(n) ?: continue
+                if (v.isJsonPrimitive && !v.isJsonNull) {
+                    val s = v.asString
+                    if (s.isNotBlank() && s != "null") return s
+                }
+            }
+            return ""
+        }
 
-        fun num(name: String): Long {
-            val v = obj.get(name)?.takeIf { it.isJsonPrimitive }?.asLong ?: 0L
-            // SmsForwarder 的 [[timestamp]] 是秒级时间戳，转成毫秒
-            return if (v in 1..9_999_999_999L) v * 1000 else v
+        // 正文：优先常见字段名；都没有则扫描所有字段，取最长的字符串（短信正文通常最长）
+        var body = firstStr(
+            "msg", "message", "content", "text", "body", "sms", "smsContent", "sms_body",
+            "短信", "正文", "内容", "短信内容", "code", "验证码"
+        )
+        if (body.isBlank()) {
+            var longest = ""
+            for ((k, v) in obj.entrySet()) {
+                if (!v.isJsonPrimitive || v.isJsonNull) continue
+                val kl = k.lowercase()
+                if (kl.contains("time") || kl.contains("date") || k.contains("时间")) continue
+                val s = runCatching { v.asString }.getOrDefault("")
+                if (s.length >= 10 && s.all { it.isDigit() }) continue // 跳过长数字（时间戳）
+                if (s != "null" && s.length > longest.length) longest = s
+            }
+            if (longest.length >= 4) body = longest
+        }
+        if (body.isBlank()) return null // 没有可识别正文，交给纯文本兜底
+
+        // 时间戳：秒级转毫秒
+        fun firstTime(vararg names: String): Long {
+            for (n in names) {
+                val v = obj.get(n) ?: continue
+                if (v.isJsonPrimitive && !v.isJsonNull) {
+                    val t = runCatching { v.asLong }.getOrDefault(0L)
+                    if (t > 0) return if (t in 1..9_999_999_999L) t * 1000 else t
+                }
+            }
+            return 0L
         }
 
         SmsMessage(
-            type = str("type").ifBlank { "sms" },
-            from = str("from"),
-            msg = str("msg"),
-            device = str("device"),
-            timestamp = num("time").takeIf { it > 0 } ?: ntfyTime * 1000
+            type = firstStr("type").ifBlank { "sms" },
+            from = firstStr("from", "sender", "phone", "number", "address", "发件人", "手机号"),
+            msg = body,
+            device = firstStr("device", "device_name", "deviceName", "设备", "设备名"),
+            timestamp = firstTime("time", "timestamp", "date", "时间").takeIf { it > 0 } ?: ntfyTime * 1000
         )
-        } // end else
     } catch (e: Exception) {
         null
     }
