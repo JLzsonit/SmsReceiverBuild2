@@ -1,5 +1,7 @@
 # 短信接收端 App（SmsReceiver · ntfy 版）
 
+> 📥 **下载安装（v1.6 内置 10 种铃声版）**：[点此下载 APK](https://github.com/JLzsonit/SmsReceiver/releases/download/v1.6/SmsReceiver-v1.6-debug.apk) · [查看全部版本](https://github.com/JLzsonit/SmsReceiver/releases)
+
 配合备用机上的 [SmsForwarder](https://github.com/pppscn/SmsForwarder) 使用，
 **两台手机无论相隔多远、是否同一网络，只要有网就能实时收到短信**。
 
@@ -15,6 +17,7 @@
 - **系统级自动填充**：把本 App 设为系统自动填充服务后，在任意 App 的验证码框点一下，自动弹出「填入验证码 xxxxxx」，一键填入（见下方「开启自动填充」）
 - 断网自动重连 + 按消息 id 去重，断线期间的消息重连后自动补收
 - 前台服务 + 开机自启 + 忽略电池优化，保证息屏也能实时收
+- **内置 10 种提示音**：设置 →「新短信提示音」可试听、更换，选择自动保存；收到短信即响（手机完全静音时不响）
 
 ## 项目结构
 
@@ -29,9 +32,12 @@ SmsReceiverApp/
 │       ├── CopyCodeReceiver.kt      # 通知栏复制按钮处理器
 │       ├── SmsAutofillService.kt    # 系统自动填充服务（验证码候选气泡）
 │       ├── NtfySubscriber.kt        # ntfy 长连接订阅（自动重连、去重、补拉）
+│       ├── RingtonePlayer.kt        # 10 个内置提示音的播放/试听
 │       ├── BootReceiver.kt          # 开机自启恢复连接
 │       ├── AppBus.kt                # 服务 ↔ 界面的共享状态
 │       └── SmsStore.kt              # 数据模型 + JSON 文件持久化
+│   ├── res/raw/
+│   │   └── ringtone_01.wav ~ ringtone_10.wav  # 10 个内置提示音（原创合成）
 │   ├── res/layout/
 │   │   └── autofill_dataset_item.xml  # 自动填充候选气泡布局
 │   └── res/xml/
